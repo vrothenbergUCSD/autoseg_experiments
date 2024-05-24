@@ -1,0 +1,22 @@
+{"raw": "setup03/Placeholder:0",
+"raw_file": "/mnt/3M-APP-SCN/01_data/CompImBio800M.zarr",
+"raw_dataset" : "raw",
+"out_file": "test_prediction.zarr",
+"out_dataset": "lsd_preds",
+"db_host": "localhost",
+"db_name": "mongo_lsd",
+"embedding": "setup03/Reshape_1:0", 
+"gt_embedding": "setup03/Placeholder_1:0", 
+"loss_weights_embedding": "setup03/Placeholder_2:0", 
+"loss": "setup03/mean_squared_error/value:0", 
+"optimizer": "setup03/Adam", 
+"input_shape": [84, 268, 268], 
+"output_shape": [48, 56, 56], 
+"summary": "setup03/setup03_eucl_loss:0", 
+"iteration": 300000,
+"worker_config": {
+    "queue": "gpu_a10g",
+    "num_cpus": 3,
+    "num_cache_workers": 3
+  },
+"outputs": {"lsds": {"out_dims": 10, "out_dtype": "uint8"}}}

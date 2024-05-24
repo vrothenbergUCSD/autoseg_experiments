@@ -1,0 +1,1 @@
+{"input_shape": [96, 484, 484], "output_shape": [60, 272, 272], "lsds_setup": "lsd", "lsds_iteration": 100000, "outputs": {"affs": {"out_dims": 3, "out_dtype": "uint8"}}}

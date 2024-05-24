@@ -1,0 +1,13 @@
+{
+    "gt_file": "/data/base/3M-APP-SCN/02_train/setup04/prediction/CompImBio800M.zarr",
+    "gt_dataset": "labels",
+    "fragments_file": "/data/base/3M-APP-SCN/02_train/setup04/prediction/CompImBio800M.zarr",
+    "fragments_dataset": "fragments",
+    "crops": null,
+    "edges_collection": "edges_hist_quant_75",
+    "thresholds_minmax": [0, 1],
+    "thresholds_step": 0.05,
+    "roi_offset": [2500,5000,5000],
+    "roi_shape": [5000,10000,10000],
+    "num_workers": 3
+}

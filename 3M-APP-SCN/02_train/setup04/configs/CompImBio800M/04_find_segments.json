@@ -1,0 +1,10 @@
+{
+    "fragments_file": "/data/base/3M-APP-SCN/02_train/setup04/prediction/CompImBio800M.zarr",
+    "edges_collection": "edges_hist_quant_75",
+    "thresholds_minmax": [0, 1],
+    "thresholds_step": 0.05,
+    "block_size": [2400,1960,1960],
+    "num_workers": 4,
+    "crops": null,
+    "fragments_dataset": "fragments"
+}

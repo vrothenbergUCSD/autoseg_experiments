@@ -1,0 +1,16 @@
+*.log
+*.tmp
+*.bak
+*.img
+*.iso
+*.zip
+*.tar.gz
+*.zarr
+*.meta
+*checkpoint*
+*events.out.tfevents.*
+*.hdf
+*.err
+*.out
+*.pkl
+*.old

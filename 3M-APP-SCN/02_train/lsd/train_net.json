@@ -1,0 +1,10 @@
+{"raw": "setup03/Placeholder:0", 
+"embedding": "setup03/Reshape_1:0", 
+"gt_embedding": "setup03/Placeholder_1:0", 
+"loss_weights_embedding": "setup03/Placeholder_2:0", 
+"loss": "setup03/mean_squared_error/value:0", 
+"optimizer": "setup03/Adam", 
+"input_shape": [84, 268, 268], 
+"output_shape": [48, 56, 56], 
+"summary": "setup03/setup03_eucl_loss:0", 
+"outputs": {"lsds": {"out_dims": 10, "out_dtype": "uint8"}}}

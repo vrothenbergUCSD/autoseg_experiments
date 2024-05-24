@@ -1,0 +1,14 @@
+{
+    "base_dir": "/data/base",
+    "experiment": "3M-APP-SCN",
+    "setup": "mtlsd_soma",
+    "iteration": 400000,
+    "file_name": "CompImBio800M-Soma.zarr",
+    "crops": null,
+    "num_workers": 32,
+    "merge_function": "hist_quant_75",
+    "block_size": [2400,1960,1960],
+    "context": [500,460,460],
+    "fragments_dataset": "fragments",
+    "affs_dataset": "pred_affs"
+}

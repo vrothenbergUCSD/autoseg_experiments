@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Predict",
+            "type": "python",
+            "request": "launch",
+            "program": "/mnt/3M-APP-SCN/02_train/lsd/predict_scan.py",
+            "console": "integratedTerminal",
+            "args": [], // Add necessary command line arguments here
+            "cwd": "/mnt/3M-APP-SCN/02_train/lsd"
+        }
+    ]
+}

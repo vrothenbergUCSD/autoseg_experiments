@@ -1,0 +1,1 @@
+{"raw": "setup03/Placeholder:0", "embedding": "setup03/Reshape_1:0", "input_shape": [120, 484, 484], "output_shape": [84, 268, 268]}
