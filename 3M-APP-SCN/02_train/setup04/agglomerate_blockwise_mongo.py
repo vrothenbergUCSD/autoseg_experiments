@@ -1,194 +1,293 @@
+import warnings
+# warnings.simplefilter(action='ignore', category=FutureWarning)
+
+import daisy
 import json
-import hashlib
 import logging
 import numpy as np
-import os
-import daisy
-import sys
+import numba as nb
 import time
-import subprocess
-
+import os
+import sys
+from funlib.evaluate import rand_voi,detection_scores
+from funlib.segment.arrays import replace_values
 from funlib.persistence.arrays import open_ds, prepare_ds
-# from funlib.persistence.graphs import FileGraphProvider
-from funlib.persistence.graphs import MongoDbGraphProvider
 
-from lsd.post import agglomerate_in_block
+from multiprocessing import Process,Manager,Pool
+from multiprocessing.managers import SharedMemoryManager
 
-logging.getLogger().setLevel(logging.INFO)
-logging.basicConfig(filename='agglomerate_blockwise.log', 
-                    level=logging.INFO, 
-                    format='%(asctime)s - %(levelname)s - %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S')
-def agglomerate(
-        base_dir,
-        experiment,
-        setup,
-        iteration,
-        file_name,
-        crops,
-        affs_dataset,
+# from concurrent.futures import ProcessPoolExecutor
+import concurrent.futures
+
+""" Script to evaluate VOI,NVI,NID against ground truth for a fragments dataset at different 
+agglomeration thresholds and find the best threshold. """
+
+log_directory = 'log'
+os.makedirs(log_directory, exist_ok=True)
+log_file = os.path.join(log_directory, 'evaluation.log')
+
+logging.basicConfig(
+    filename=log_file,
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+@nb.njit
+def replace_where_not(arr, needle, replace):
+    arr = arr.ravel()
+    needles = set(needle)
+    for idx in range(arr.size):
+        if arr[idx] not in needles:
+            arr[idx] = replace
+
+
+def evaluate_thresholds(
+        gt_file,
+        gt_dataset,
+        fragments_file,
         fragments_dataset,
-        block_size,
-        context,
-        num_workers,
-        merge_function,
-        **kwargs):
+        crops,
+        edges_collection,
+        thresholds_minmax,
+        thresholds_step,
+        roi_offset,
+        roi_shape,
+        num_workers):
 
-    '''Run agglomeration in parallel blocks. Requires that affinities have been
-    predicted before.
-    Args:
-        file_name (``string``):
-            The input file containing affs and fragments.
-        affs_dataset, fragments_dataset (``string``):
-            Where to find the affinities and fragments.
-        block_size (``tuple`` of ``int``):
-            The size of one block in world units.
-        context (``tuple`` of ``int``):
-            The context to consider for fragment extraction and agglomeration,
-            in world units.
-        num_workers (``int``):
-            How many blocks to run in parallel.
-        merge_function (``string``):
-            Symbolic name of a merge function. See dictionary below.
-    '''
-        
-   
-    affs_file = os.path.abspath(
-            os.path.join(
-                base_dir,experiment,"02_train",setup,"prediction",file_name
-                )
-            )
-    
+    results_file = os.path.join(fragments_file,"results.json") 
+    results = {}
     crop = ""
 
-
-    if crop != "":
-
-        crop_path = os.path.abspath(os.path.join(base_dir,experiment,"01_data",file_name,crop))
-
-        with open(crop_path,"r") as f:
+    start = time.time()
+    
+    if crop != "": #crop must be absolute path
+        with open(os.path.join(gt_file,crop),"r") as f:
             crop = json.load(f)
         
         crop_name = crop["name"]
         crop_roi = daisy.Roi(crop["offset"],crop["shape"])
 
-        affs_file = os.path.join(affs_file,crop_name+'.zarr')
-    
+        fragments_file = os.path.join(fragments_file,crop_name+'.zarr')
+
     else:
-        crop_name = ""
-        crop_roi = None
+        crop_name = "evaluate_crop"
+        crop_roi = daisy.Roi(roi_offset, roi_shape)
+        # "roi_offset": [2500,5000,5000]
+        # "roi_shape": [5000,10000,10000]
 
-    fragments_file = affs_file
-
-    # block_directory = os.path.join(fragments_file,'block_nodes')
-
-    logging.info("Reading affs from %s", affs_file)
-    affs = open_ds(affs_file, affs_dataset, mode='r')
-
-    if block_size == [0,0,0]:
-        context = [50,40,40]
-        block_size = crop_roi.shape if crop_roi else affs.roi.shape
-
-    logging.info("Reading fragments from %s", fragments_file)
-    fragments = open_ds(fragments_file, fragments_dataset, mode='r')
-
-    context = daisy.Coordinate(context)
-    total_roi = affs.roi.grow(context, context)
-
-    read_roi = daisy.Roi((0,)*affs.roi.dims, block_size).grow(context, context)
-    write_roi = daisy.Roi((0,)*affs.roi.dims, block_size)
-
-    task = daisy.Task(
-        'AgglomerateBlockwiseTask',
-        total_roi,
-        read_roi,
-        write_roi,
-        process_function=lambda b: agglomerate_worker(
-            b,
-            affs_file,
-            affs_dataset,
-            fragments_file,
-            fragments_dataset,
-            # block_directory,
-            write_roi.shape,
-            merge_function),
-        num_workers=num_workers,
-        read_write_conflict=False,
-        timeout=5,
-        fit='shrink')
-
-    done = daisy.run_blockwise([task])
-
-    if not done:
-        raise RuntimeError("at least one block failed!")
-
-    block_size = [0,0,0]
-
-def agglomerate_worker(
-        block,
-        affs_file,
-        affs_dataset,
-        fragments_file,
-        fragments_dataset,
-        # block_directory,
-        write_size,
-        merge_function):
-
-    waterz_merge_function = {
-        'hist_quant_10': 'OneMinus<HistogramQuantileAffinity<RegionGraphType, 10, ScoreValue, 256, false>>',
-        'hist_quant_10_initmax': 'OneMinus<HistogramQuantileAffinity<RegionGraphType, 10, ScoreValue, 256, true>>',
-        'hist_quant_25': 'OneMinus<HistogramQuantileAffinity<RegionGraphType, 25, ScoreValue, 256, false>>',
-        'hist_quant_25_initmax': 'OneMinus<HistogramQuantileAffinity<RegionGraphType, 25, ScoreValue, 256, true>>',
-        'hist_quant_50': 'OneMinus<HistogramQuantileAffinity<RegionGraphType, 50, ScoreValue, 256, false>>',
-        'hist_quant_50_initmax': 'OneMinus<HistogramQuantileAffinity<RegionGraphType, 50, ScoreValue, 256, true>>',
-        'hist_quant_75': 'OneMinus<HistogramQuantileAffinity<RegionGraphType, 75, ScoreValue, 256, false>>',
-        'hist_quant_75_initmax': 'OneMinus<HistogramQuantileAffinity<RegionGraphType, 75, ScoreValue, 256, true>>',
-        'hist_quant_90': 'OneMinus<HistogramQuantileAffinity<RegionGraphType, 90, ScoreValue, 256, false>>',
-        'hist_quant_90_initmax': 'OneMinus<HistogramQuantileAffinity<RegionGraphType, 90, ScoreValue, 256, true>>',
-        'mean': 'OneMinus<MeanAffinity<RegionGraphType, ScoreValue>>',
-    }[merge_function]
-
-    logging.info(f"Reading affs from {affs_file}")
-    affs = open_ds(affs_file, affs_dataset)
-
+    # open fragments
     logging.info(f"Reading fragments from {fragments_file}")
-    fragments = open_ds(fragments_file, fragments_dataset)
 
-    #opening RAG file
-    # rag_provider = FileGraphProvider(
-    #     directory=block_directory,
-    #     chunk_size=write_size,
-    #     mode='r+',
-    #     directed=False,
-    #     edges_collection='edges_' + merge_function,
-    #     position_attribute=['center_z', 'center_y', 'center_x']
-    #     )
-    logging.info("Opening RAG MongoDB...")
-    rag_provider = MongoDbGraphProvider(
-        db_name="mongo_lsd",
-        host="localhost",  # Optional, if not localhost
-        mode="r+",  # Read and write mode
-        directed=False,  # Graph is not directed
-        nodes_collection="nodes",  # Optional, if different from default
-        edges_collection='edges_' + merge_function,
-        meta_collection="meta",  # Optional, if different from default
-        position_attribute=['center_z', 'center_y', 'center_x']  # Position attributes
-    )
-    logging.info("RAG file opened")
+    fragments = ds_wrapper(fragments_file, fragments_dataset)
 
-    agglomerate_in_block(
-            affs,
+    logging.info("Reading gt from %s" %gt_file)
+
+    gt = ds_wrapper(gt_file, gt_dataset)
+
+    logging.info("fragments ROI is {}".format(fragments.roi))
+    logging.info("gt roi is {}".format(gt.roi))
+
+    vs = gt.voxel_size
+
+    if crop_roi:
+        common_roi = crop_roi
+        logging.info(f"common_roi = crop_roi")
+
+    else:
+        common_roi = fragments.roi.intersect(gt.roi)
+        logging.info(f"common_roi = fragments.roi.intersect(gt.roi)")
+
+    logging.info("common roi is {}".format(common_roi))
+    # evaluate only where we have both fragments and GT
+    logging.info("Cropping fragments, mask, and GT to common ROI %s", common_roi)
+    fragments = fragments[common_roi]
+    gt = gt[common_roi]
+
+    logging.info("Converting fragments to nd array...")
+    fragments = fragments.to_ndarray()
+
+    logging.info("Converting gt to nd array...")
+    gt = gt.to_ndarray()
+
+    thresholds = list(np.arange(
+        thresholds_minmax[0],
+        thresholds_minmax[1],
+        thresholds_step))
+    thresholds = np.round(thresholds, 4)
+
+    logging.info("Evaluating thresholds...")
+    
+    # parallel process
+    manager = Manager()
+    metrics = manager.dict()
+
+    for threshold in thresholds:
+        metrics[threshold] = manager.dict()
+
+    logging.info(f"Starting pool of {num_workers} workers")
+
+    # with Pool(num_workers) as pool:
+    #     pool.starmap(evaluate,[(t,fragments,gt,fragments_file,crop_name,edges_collection,metrics) for t in thresholds])
+    def evaluate_args(t):
+        return (t, fragments, gt, fragments_file, crop_name, edges_collection, metrics)
+
+    with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
+        futures = {executor.submit(evaluate, *evaluate_args(t)): t for t in thresholds}
+        for future in concurrent.futures.as_completed(futures):
+            t = futures[future]
+            try:
+                future.result()
+                logging.info(f"Successfully processed threshold {t}")
+            except Exception as exc:
+                logging.error(f'An exception occurred during processing threshold {t}: {exc}')
+
+    logging.info('Completed pool.starmap')
+    voi_sums = {metrics[x]['voi_sum']:x for x in thresholds}
+    #nvi_sums = {metrics[x]['nvi_sum']:x for x in thresholds}
+    #nids = {metrics[x]['nid']:x for x in thresholds}
+
+    voi_thresh = voi_sums[sorted(voi_sums.keys())[0]]
+    #nvi_thresh = nvi_sums[sorted(nvi_sums.keys())[0]]
+    #nid_thresh = nids[sorted(nids.keys())[0]]
+
+    metrics = dict(metrics)
+    metrics['best_voi'] = metrics[voi_thresh]
+
+    results[crop_name] = metrics
+
+    logging.info(f"best VOI for {crop_name} is at threshold= {voi_thresh} , VOI= {metrics[voi_thresh]['voi_sum']}, VOI_split= {metrics[voi_thresh]['voi_split']} , VOI_merge= {metrics[voi_thresh]['voi_merge']}")
+    logging.info(f"Time to evaluate thresholds = {time.time() - start}")
+
+    fragments_file = os.path.dirname(fragments_file) #reset
+
+    #finally, dump all results to json
+    with open(results_file,"w") as f:
+        json.dump(results,f,indent=4)
+
+
+def ds_wrapper(in_file, in_ds):
+
+    try:
+        ds = open_ds(in_file, in_ds)
+    except:
+        ds = open_ds(in_file, in_ds + '/s0')
+
+    return ds
+
+def evaluate(
+        threshold,
+        fragments,
+        gt,
+        fragments_file,
+        crop_name,
+        edges_collection,
+        metrics):
+    
+    logging.info(f'Starting evaluation for threshold: {threshold}')
+    segment_ids = get_segmentation(
             fragments,
-            rag_provider,
-            block,
-            merge_function=waterz_merge_function,
-            threshold=1.0)
+            fragments_file,
+            edges_collection,
+            threshold)
+    logging.info(f'Segmentation done for threshold: {threshold}')
 
-def check_block(blocks_agglomerated, block):
+    results = evaluate_threshold(
+            edges_collection,
+            crop_name,
+            segment_ids,
+            gt,
+            threshold)
+    logging.info(f'Evaluation done for threshold: {threshold}')
 
-    done = blocks_agglomerated.count({'block_id': block.block_id}) >= 1
+    metrics[threshold] = results
 
-    return done
+
+def get_segmentation(
+        fragments,
+        fragments_file,
+        edges_collection,
+        threshold):
+
+    #logging.info("Loading fragment - segment lookup table for threshold %s..." %threshold)
+    fragment_segment_lut_dir = os.path.join(
+            fragments_file,
+            'luts',
+            'fragment_segment')
+
+    fragment_segment_lut_file = os.path.join(
+            fragment_segment_lut_dir,
+            'seg_%s_%d.npz' % (edges_collection, int(threshold*10000)))
+
+    fragment_segment_lut = np.load(
+            fragment_segment_lut_file)['fragment_segment_lut']
+
+    assert fragment_segment_lut.dtype == np.uint64
+
+    #logging.info("Relabeling fragment ids with segment ids...")
+
+    segment_ids = replace_values(fragments, fragment_segment_lut[0], fragment_segment_lut[1])
+
+    return segment_ids
+
+
+def evaluate_threshold(
+        edges_collection,
+        crop_name,
+        test,
+        truth,
+        threshold):
+
+        gt = truth.copy().astype(np.uint64)
+        segment_ids = test.copy().astype(np.uint64)
+
+        assert gt.shape == segment_ids.shape
+
+        #if crop is a training crop (i.e a "run")
+        if not crop_name.startswith('crop'):
+            name = 'run'+crop_name[-2:]
+
+            #return IDs of segment_ids where gt > 0
+            chosen_ids = np.unique(segment_ids[gt != 0])
+
+            #mask out all but remaining ids in segment_ids
+            replace_where_not(segment_ids,chosen_ids,0)
+
+        else: name = crop_name
+
+        #get VOI and RAND
+        rand_voi_report = rand_voi(
+                gt,
+                segment_ids,
+                return_cluster_scores=False)
+
+        #scores = detection_scores(
+        #        gt,
+        #        segment_ids,
+        #        voxel_size=[50,2,2]) #lazy
+        
+        metrics = rand_voi_report.copy()
+        out = {}
+        
+
+        for k in {'voi_split_i', 'voi_merge_j'}:
+            del metrics[k]
+
+        metrics['voi_sum'] = metrics['voi_split']+metrics['voi_merge']
+        metrics['nvi_sum'] = metrics['nvi_split']+metrics['nvi_merge']
+        metrics['merge_function'] = edges_collection.strip('edges_')
+
+        #metrics["com_distance"] = float(scores["avg_distance"])
+        #metrics["iou"] = float(scores["avg_iou"])
+        #metrics["tp"] = scores["tp"]
+        #metrics["fp"] = scores["fp"]
+        #metrics["fn"] = scores["fn"]
+        #metrics["precision"] = scores["tp"] / (scores["fp"] + scores["tp"])
+        #metrics["recall"] = scores["tp"] / (scores["fp"] + scores["fn"])
+
+        #metrics = {name+'_'+k:v for k,v in metrics.items()}
+        metrics['threshold'] = threshold
+
+        return metrics
 
 if __name__ == "__main__":
 
@@ -197,15 +296,4 @@ if __name__ == "__main__":
     with open(config_file, 'r') as f:
         config = json.load(f)
 
-    start = time.time()
-
-    agglomerate(**config)
-
-    end = time.time()
-
-    seconds = end - start
-    minutes = seconds/60
-    hours = minutes/60
-    days = hours/24
-
-    print('Total time to agglomerate: %f seconds / %f minutes / %f hours / %f days' % (seconds, minutes, hours, days))
+    evaluate_thresholds(**config)

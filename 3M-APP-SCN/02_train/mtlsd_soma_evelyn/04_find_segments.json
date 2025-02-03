@@ -1,0 +1,10 @@
+{
+    "fragments_file": "/data/base/3M-APP-SCN/02_train/mtlsd_soma_evelyn/prediction/APP-3M-SCN-SomaGT_400000.zarr",
+    "edges_collection": "edges_hist_quant_75",
+    "thresholds_minmax": [0, 1],
+    "thresholds_step": 0.02,
+    "block_size": [2400,1960,1960],
+    "num_workers": 32,
+    "crops": null,
+    "fragments_dataset": "fragments"
+}

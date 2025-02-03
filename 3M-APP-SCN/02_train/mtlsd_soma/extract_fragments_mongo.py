@@ -96,7 +96,7 @@ def extract_fragments(
         crop_name = crop["name"]
         crop_roi = daisy.Roi(crop["offset"],crop["shape"])
 
-        ds_in_file = os.path.join(ds_in_file,crop_name+'.zarr')
+        ds_in_file = os.path.join(ds_in_file, crop_name+'.zarr')
         
     else:
         crop_name = ""
@@ -133,7 +133,7 @@ def extract_fragments(
     num_voxels_in_block = (write_roi/ds_in.voxel_size).size
 
     # Clear daisy_logs/ExtractFragmentsBlockwiseTask
-    log_dir_path = '/data/base/3M-APP-SCN/02_train/setup04/daisy_logs/ExtractFragmentsBlockwiseTask'
+    log_dir_path = '/data/base/3M-APP-SCN/02_train/mtlsd_soma/daisy_logs/ExtractFragmentsBlockwiseTask'
     if os.path.isdir(log_dir_path):
         for filename in os.listdir(log_dir_path):
             file_path = os.path.join(log_dir_path, filename)

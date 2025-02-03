@@ -9,15 +9,10 @@ import logging
 from tqdm import tqdm
 import time
 import argparse 
-import numcodecs
 import os
 from rich.progress import Progress
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-# Blosc may share incorrect global state amongst processes causing programs to hang
-#   https://zarr.readthedocs.io/en/stable/tutorial.html#tutorial-tips-blosc
-import numcodecs.blosc
-numcodecs.blosc.use_threads = False
 
 
 # Setup argument parser

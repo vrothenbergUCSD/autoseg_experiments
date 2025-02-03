@@ -1,0 +1,17 @@
+{
+    "fragments_file": "/data/base/3M-APP-SCN/02_train/mtlsd_soma/prediction/APP-3M-SCN-SomaGT_400k.zarr",
+    "fragments_dataset": "fragments",
+    "crops": [
+        {
+            "name": "full-volume",
+            "offset": [0, 0, 0],
+            "shape": [15000, 45000, 30000]
+        }
+    ],
+    "edges_collection":"edges_hist_quant_75",
+    "block_size": [2400,1960,1960],
+    "thresholds_minmax": [0, 1],
+    "thresholds_step": 0.02,
+    "out_dataset": "segmentation",
+    "num_workers": 32
+}

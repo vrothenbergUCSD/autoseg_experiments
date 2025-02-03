@@ -3,7 +3,7 @@
     "experiment": "3M-APP-SCN",
     "setup": "mtlsd_soma",
     "iteration": 400000,
-    "file_name": "CompImBio800M-Soma.zarr",
+    "file_name": "APP-3M-SCN-SomaGT_400k.zarr",
     "crops": null,
     "num_workers": 32,
     "merge_function": "hist_quant_75",

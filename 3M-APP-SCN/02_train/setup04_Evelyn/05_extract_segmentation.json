@@ -1,0 +1,11 @@
+{
+    "fragments_file": "/data/base/3M-APP-SCN/02_train/setup04_Evelyn/prediction/CompImBio800M.zarr",
+    "fragments_dataset": "fragments",
+    "crops": null,
+    "edges_collection": "edges_hist_quant_75",
+    "block_size": [2400,1960,1960],
+    "thresholds_minmax": [0.1, 0.51],
+    "thresholds_step": 0.2,
+    "num_workers": 32,
+    "out_dataset": "segmentation"
+}

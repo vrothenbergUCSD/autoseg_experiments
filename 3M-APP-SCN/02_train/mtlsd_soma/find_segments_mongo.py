@@ -8,16 +8,19 @@ import sys
 import time
 
 from funlib.segment.graphs.impl import connected_components
-# from funlib.persistence.graphs import FileGraphProvider
 from funlib.persistence.graphs import MongoDbGraphProvider
 from funlib.persistence.arrays import open_ds, prepare_ds
 
-logging.getLogger().setLevel(logging.INFO)
 # Initialize logging
-logging.basicConfig(filename='find_segments.log', 
+logging.basicConfig(filename='find_segments_mongo.log', 
                     level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
+
+# Redirect stdout and stderr to the log file
+log_file = open('find_segments_mongo.log', 'a')
+sys.stdout = log_file
+sys.stderr = log_file
 
 def handle_exception(exc_type, exc_value, exc_traceback):
     """Handle uncaught exceptions and log them."""
@@ -282,3 +285,9 @@ if __name__ == "__main__":
     logging.info("Complete.")
 
     logging.info(f'Took {time.time() - start} seconds to find segments and store LUTs')
+
+
+# Ensure that stdout and stderr redirection is reset when the script completes
+log_file.close()
+sys.stdout = sys.__stdout__
+sys.stderr = sys.__stderr__

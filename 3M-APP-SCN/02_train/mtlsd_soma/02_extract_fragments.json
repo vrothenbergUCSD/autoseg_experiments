@@ -3,10 +3,16 @@
     "experiment": "3M-APP-SCN",
     "setup": "mtlsd_soma",
     "iteration": 400000,
-    "file_name": "CompImBio800M-Soma.zarr",
+    "file_name": "SCN_DL_12AM_VL_400k.zarr",
     "ds_in_dataset": "pred_affs",
     "fragments_dataset": "fragments",
-    "crops": null,
+    "crops": [
+        {
+            "name": "full-volume",
+            "offset": [0, 0, 0],
+            "shape": [15000, 45000, 30000]
+        }
+    ],
     "block_size": [2400,1960,1960],
     "context": [500,460,460],
     "num_workers": 32,

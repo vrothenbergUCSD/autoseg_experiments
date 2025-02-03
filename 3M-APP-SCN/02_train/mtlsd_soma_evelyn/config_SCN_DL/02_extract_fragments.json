@@ -1,0 +1,19 @@
+{
+    "base_dir": "/data/base/",
+    "experiment": "3M-APP-SCN",
+    "setup": "mtlsd_soma",
+    "iteration": 400000,
+    "file_name": "SCN_DL_12AM_VL_400k.zarr",
+    "ds_in_dataset": "pred_affs",
+    "fragments_dataset": "fragments",
+    "crops": null,
+    "block_size": [2400,1960,1960],
+    "context": [500,460,460],
+    "num_workers": 32,
+    "fragments_in_xy": true,
+    "epsilon_agglomerate": 0.01,
+    "mask_file": null,
+    "mask_dataset": null,
+    "affs_dataset": "pred_affs",
+    "filter_fragments": 0.05
+}

@@ -146,6 +146,8 @@ def predict_blockwise(
     out_dir = os.path.join(setup_dir, out_base)
 
     raw_file = os.path.abspath(raw_file)
+    print('raw_file', raw_file)
+    print('raw_dataset', raw_dataset)
     
     out_file_path = os.path.join(out_dir, out_file)
 

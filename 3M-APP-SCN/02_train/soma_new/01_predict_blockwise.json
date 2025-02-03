@@ -1,0 +1,16 @@
+{
+  "base_dir": "/data/base",
+  "experiment": "3M-APP-SCN",
+  "setup": "soma_new",
+  "iteration": 300000,
+  "raw_file": "config_roi/config_roi_SCN_DL_12AM_VL-1500_res.json",
+  "raw_dataset": "raw",
+  "out_base": "prediction",
+  "out_file": "SCN_DL_12AM_VL-1500_res-fix.zarr",
+  "num_workers": 1,
+  "worker_config": {
+    "queue": "gpu_a10g",
+    "num_cpus": 5,
+    "num_cache_workers": 5
+  }
+}

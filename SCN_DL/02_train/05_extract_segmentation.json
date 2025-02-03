@@ -1,0 +1,11 @@
+{
+    "fragments_file": "/data/base/3M-APP-SCN/02_train/mtlsd_soma/prediction/SCN_DL_12AM_VL-Soma.zarr",
+    "fragments_dataset": "fragments",
+    "crops": null,
+    "edges_collection":"edges_hist_quant_75",
+    "block_size": [2400,1960,1960],
+    "thresholds_minmax": [0.01, 0.03],
+    "thresholds_step": 0.01,
+    "out_dataset": "segmentation",
+    "num_workers": 64
+}

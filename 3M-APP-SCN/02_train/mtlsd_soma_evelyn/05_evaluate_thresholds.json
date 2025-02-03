@@ -1,0 +1,17 @@
+{
+    "gt_file": "/data/base/3M-APP-SCN/01_data/APP-3M-SCN-SomaGT.zarr",
+    "gt_dataset": "soma",
+    "fragments_file": "/data/base/3M-APP-SCN/02_train/mtlsd_soma_evelyn/prediction/APP-3M-SCN-SomaGT_400000.zarr",
+    "fragments_dataset": "fragments",
+    "crops": [
+        {
+            "name": "full-volume",
+            "offset": [0, 0, 0],
+            "shape": [15000, 45000, 30000]
+        }
+    ],
+    "edges_collection": "edges_hist_quant_75",
+    "thresholds_minmax": [0, 1],
+    "thresholds_step": 0.02,
+    "num_workers": 1
+}

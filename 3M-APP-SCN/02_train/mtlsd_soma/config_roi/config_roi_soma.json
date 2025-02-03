@@ -1,0 +1,5 @@
+{
+    "container": "/data/base/3M-APP-SCN/01_data/APP-3M-SCN-SomaGT.zarr",
+    "offset" : [0, 0, 0],
+    "size": [15000, 45000, 30000]
+  }

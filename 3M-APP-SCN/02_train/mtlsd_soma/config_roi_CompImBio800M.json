@@ -1,5 +1,0 @@
-{
-  "container": "/data/base/3M-APP-SCN/01_data/CompImBio800M.zarr",
-  "offset" : [0, 0, 0],
-  "size": [10000, 20000, 20000]
-}

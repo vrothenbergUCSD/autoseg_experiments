@@ -15,7 +15,7 @@ from funlib.persistence.graphs import MongoDbGraphProvider
 from lsd.post import agglomerate_in_block
 
 logging.getLogger().setLevel(logging.INFO)
-logging.basicConfig(filename='agglomerate_blockwise.log', 
+logging.basicConfig(filename='agglomerate_blockwise_mongo.log', 
                     level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')

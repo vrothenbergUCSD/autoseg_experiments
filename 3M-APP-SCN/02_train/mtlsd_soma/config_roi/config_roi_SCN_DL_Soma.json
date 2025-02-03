@@ -1,0 +1,5 @@
+{
+    "container": "/data/base/3M-APP-SCN/01_data/SCN_DL_12AM_VL.zarr",
+    "offset" : [60000, 15000, 15000],
+    "size": [20000, 15000, 15000]
+}

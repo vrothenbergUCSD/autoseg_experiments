@@ -1,5 +1,5 @@
 '''
-Usage: python -i view_data.py -d /data/base/3M-APP-SCN/01_data/CompImBio800M.zarr
+Usage: python -i view_data.py -d /data/base/3M-APP-SCN/01_data/APP-3M-SCN-3000.zarr
 
 Adjust datasets to match Zarr
 '''
@@ -35,14 +35,17 @@ neuroglancer.set_server_bind_address(args.bind_address)
 
 f = zarr.open(args.data_dir[0])
 
+
+
 datasets = [
     "raw",
-    "labels",
-    # "soma",
-    # "soma_mask",
+    # "labels",
+    "soma",
+    "soma_mask",
+    "soma_invert"
     # "soma_segmentation_0.3_filtered"
-    "labels_mask",
-    "unlabelled"
+    # "labels_mask",
+    # "unlabelled"
 ]
 
 viewer = neuroglancer.Viewer()
@@ -63,6 +66,9 @@ with viewer.txn() as s:
         res = f[ds].attrs["resolution"]
         offset = f[ds].attrs["offset"]
 
+
+        print(res, offset)
+
         dims = neuroglancer.CoordinateSpace(
             names=["z", "y", "x"], units="nm", scales=res
         )
@@ -71,16 +77,19 @@ with viewer.txn() as s:
         #     names=["x", "y", "z"], units="nm", scales=res
         # )
 
+        #Convert offset to voxel coordinates
+        voxel_offset = [o / r for o, r in zip(offset, res)]
+
         data = f[ds][:]
 
         if "mask" in ds:
             data *= 255
 
         layer = neuroglancer.LocalVolume(
-            data=data, voxel_offset=offset, dimensions=dims
+            data=data, voxel_offset=voxel_offset, dimensions=dims
         )
 
-        if "label" in ds:
+        if "label" in ds or "soma" in ds:
             print('Label - Segmentation')
             layer_type = neuroglancer.SegmentationLayer
             s.layers[ds] = layer_type(source=layer)

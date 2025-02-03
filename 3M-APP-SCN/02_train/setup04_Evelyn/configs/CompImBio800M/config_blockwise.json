@@ -1,0 +1,16 @@
+{
+  "base_dir": "/data/base",
+  "experiment": "3M-APP-SCN",
+  "setup": "setup04",
+  "iteration": 455000,
+  "raw_file": "config_roi.json",
+  "raw_dataset": "raw",
+  "out_base": "prediction",
+  "out_file": "CompImBio800M_debug.zarr",
+  "num_workers": 1,
+  "worker_config": {
+    "queue": "gpu_a10g",
+    "num_cpus": 2,
+    "num_cache_workers": 2
+  }
+}

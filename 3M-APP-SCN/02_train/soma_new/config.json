@@ -1,0 +1,16 @@
+{"raw": "setup04/Placeholder:0", 
+"embedding": "setup04/Reshape_1:0", 
+"affs": "setup04/Squeeze_1:0", 
+"gt_embedding": "setup04/Placeholder_1:0", 
+"gt_affs": "setup04/Placeholder_3:0", 
+"loss_weights_embedding": "setup04/Placeholder_2:0", 
+"loss_weights_affs": "setup04/Placeholder_4:0", 
+"loss": "setup04/add:0", 
+"optimizer": "setup04/Adam", 
+"input_shape": [96, 484, 484], 
+"output_shape": [60, 272, 272], 
+"summary": "setup04/Merge/MergeSummary:0", 
+"outputs": 
+{"affs": {"out_dims": 3, "out_dtype": "uint8"}, 
+"lsds": {"out_dims": 10, "out_dtype": "uint8"}}
+}

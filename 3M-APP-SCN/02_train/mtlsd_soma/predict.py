@@ -53,6 +53,7 @@ def predict(
     pred_lsds = gp.ArrayKey("PRED_LSDS")
 
     voxel_size = gp.Coordinate((50, 10, 10))
+    # voxel_size = gp.Coordinate((30, 16, 16))
 
     in_channels = 1
     num_fmaps = 12

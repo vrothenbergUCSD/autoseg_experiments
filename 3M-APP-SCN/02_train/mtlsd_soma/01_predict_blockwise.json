@@ -3,10 +3,10 @@
   "experiment": "3M-APP-SCN",
   "setup": "mtlsd_soma",
   "iteration": 400000,
-  "raw_file": "config_roi_CompImBio800M.json",
+  "raw_file": "config_roi/config_roi_SCN_DL_Soma.json",
   "raw_dataset": "raw",
   "out_base": "prediction",
-  "out_file": "CompImBio800M-Soma.zarr",
+  "out_file": "SCN_DL_12AM_VL_400k.zarr",
   "num_workers": 1,
   "worker_config": {
     "queue": "gpu_a10g",
