@@ -15,6 +15,8 @@ from funlib.segment.arrays import replace_values
 from multiprocessing import Process,Manager,Pool
 from multiprocessing.managers import SharedMemoryManager
 
+from funlib.persistence.arrays import open_ds, prepare_ds
+
 """ Script to evaluate VOI,NVI,NID against ground truth for a fragments dataset at different 
 agglomeration thresholds and find the best threshold. """
 
@@ -47,14 +49,16 @@ def evaluate_thresholds(
 
         start = time.time()
         
-        if crop != "": #crop must be absolute path
-            with open(os.path.join(gt_file,crop),"r") as f:
-                crop = json.load(f)
+        if crop != "": 
+            # Assuming crop is a dictionary supplied in the config json 
+
+            # with open(os.path.join(gt_file,crop),"r") as f:
+            #     crop = json.load(f)
             
             crop_name = crop["name"]
             crop_roi = daisy.Roi(crop["offset"],crop["shape"])
 
-            fragments_file = os.path.join(fragments_file,crop_name+'.zarr')
+            # fragments_file = os.path.join(fragments_file)
 
         else:
             crop_name = "wtf"
@@ -106,10 +110,10 @@ def evaluate_thresholds(
         for threshold in thresholds:
             metrics[threshold] = manager.dict()
 
-        for t in thresholds:
-            evaluate(t, fragments, gt, fragments_file, crop_name, edges_collection, metrics)
+        # for t in thresholds:
+        #     evaluate(t, fragments, gt, fragments_file, crop_name, edges_collection, metrics)
 
-        with Pool(16) as pool:
+        with Pool(num_workers) as pool:
             pool.starmap(evaluate,[(t,fragments,gt,fragments_file,crop_name,edges_collection,metrics) for t in thresholds])
        
         voi_sums = {metrics[x]['voi_sum']:x for x in thresholds}
@@ -138,9 +142,9 @@ def evaluate_thresholds(
 def ds_wrapper(in_file, in_ds):
 
     try:
-        ds = daisy.open_ds(in_file, in_ds)
+        ds = open_ds(in_file, in_ds)
     except:
-        ds = daisy.open_ds(in_file, in_ds + '/s0')
+        ds = open_ds(in_file, in_ds + '/s0')
 
     return ds
 
@@ -183,7 +187,7 @@ def get_segmentation(
 
     fragment_segment_lut_file = os.path.join(
             fragment_segment_lut_dir,
-            'seg_%s_%d.npz' % (edges_collection, int(threshold*100)))
+            'seg_%s_%d.npz' % (edges_collection, int(threshold*10000)))
 
     fragment_segment_lut = np.load(
             fragment_segment_lut_file)['fragment_segment_lut']

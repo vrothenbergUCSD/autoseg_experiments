@@ -11,7 +11,7 @@
         }
     ],
     "edges_collection": "edges_hist_quant_75",
-    "thresholds_minmax": [0, 1],
+    "thresholds_minmax": [0.1, 0.11],
     "thresholds_step": 0.02,
-    "num_workers": 1
+    "num_workers": 32
 }
